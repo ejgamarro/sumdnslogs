@@ -1,6 +1,6 @@
-# Script:	sumdnslogs.py
-# Author:	E.J. Gamarro
-# Description:	A script to help summarize DNS logs.
+Script:	sumdnslogs.py
+Author:	E.J. Gamarro
+Description:	A script to help summarize DNS logs.
 
 Usage:
 	./sumdnslogs.py <log format> <report option> <threshold>    
