@@ -40,6 +40,7 @@ class DnsLog:
     t_queries_min = 0
 
     t_thresh = 10
+    tot_entries = 0
 
     t_types = {}
     t_types_min = {}
@@ -120,19 +121,13 @@ class DnsLog:
 
     def print_top(self):
         print "Clients: %s" % len(self.t_clients)
-        print "Top Clients: "
-        for key, val in (self.top_clients).items():
-            print "%s: %s" % (key, val)
+        self.print_top_clients()
 
         print "\n\n\nDomains: %s" % len(self.t_domains)
-        print "Top Domains: "
-        for key, val in (self.top_domains).items():
-            print "%s: %s" % (key, val)
+        self.print_top_domains()
 
         print "\n\n\nQueries: %s" % len(self.t_queries)
-        print "Top Queries: "
-        for key, val in (self.top_queries).items():
-            print "%s: %s" % (key, val)
+        self.print_top_queries()
 
 
     def get_top_clients(self, thresh, log_f):
@@ -160,14 +155,22 @@ class DnsLog:
 
 
     def print_top_clients(self):
-        for key, val in self.top_clients.items():
-            print "%s, %s" % (key, val)
+        tmp_output = list()
+        for key, value in sorted( self.top_clients.iteritems(), key=lambda (k,v): (v,k) ):
+            out_str = "%s: %s" % (key, value)
+            tmp_output.append(out_str)
+
+        print "Top Clients: "
+        for i in reversed(tmp_output):
+            print i
 
 
     def get_top_domains(self, thresh, mode, log_f):
         self.t_thresh = thresh
 
         for t_line in sys.stdin.readlines():
+            self.tot_entries += 1
+
             if not t_line:
                 break
 
@@ -176,6 +179,7 @@ class DnsLog:
 
             elif log_f == "syslog":
                 self.parse_top_domains( self.syslog(t_line), mode)
+
             elif log_f == "bro":
                 if t_line.startswith("#"):
                     pass
@@ -188,8 +192,14 @@ class DnsLog:
 
 
     def print_top_domains(self):
-        for key, val in self.top_domains.items():
-            print "%s, %s" % (key, val)
+        tmp_output = list()
+        for key, value in sorted( self.top_domains.iteritems(), key=lambda (k,v): (v,k) ):
+            out_str = "%s: %s" % (key, value)
+            tmp_output.append(out_str)
+
+        print "Top Domains: "
+        for i in reversed(tmp_output):
+            print i
 
 
     def get_top_queries(self, thresh, log_f):
@@ -217,8 +227,14 @@ class DnsLog:
 
 
     def print_top_queries(self):
-        for key, val in self.top_queries.items():
-            print "%s, %s" % (key, val)
+        tmp_output = list()
+        for key, value in sorted( self.top_queries.iteritems(), key=lambda (k,v): (v,k) ):
+            out_str = "%s: %s" % (key, value)
+            tmp_output.append(out_str)
+
+        print "Top Queries: "
+        for i in reversed(tmp_output):
+            print i
 
 
     def types(self, thresh, log_f):
@@ -340,14 +356,16 @@ class DnsLog:
         elif count >= self.t_clients_min:
             self.top_clients[ip] = count
 
-        t_lst = self.top_clients.values()
-        self.t_clients_min = self.new_min(t_lst)
 
         if len(self.top_clients) > self.t_thresh:
+            t_lst = self.top_clients.values()
+            old_min = self.t_clients_min
+            self.t_clients_min = self.new_min(t_lst)
 
-            for key, val in (self.top_clients).items():
-                if val < self.t_clients_min:
-                    del self.top_clients[key]
+            if self.t_clients_min > old_min:
+                for key, val in (self.top_clients).items():
+                    if val < self.t_clients_min:
+                        del self.top_clients[key]
 
 
     def refactor_tdomains(self, name, count):
@@ -357,13 +375,17 @@ class DnsLog:
         elif count >= self.t_domains_min:
             self.top_domains[name] = count
 
-        t_lst = self.top_domains.values()
-        self.t_domains_min = self.new_min(t_lst)
 
         if len(self.top_domains) > self.t_thresh:
-            for key, val in (self.top_domains).items():
-                if val < self.t_domains_min:
-                    del self.top_domains[key]
+
+            t_lst = self.top_domains.values()
+            old_min = self.t_domains_min
+            self.t_domains_min = self.new_min(t_lst)
+
+            if self.t_domains_min > old_min:
+                for key, val in (self.top_domains).items():
+                    if val < self.t_domains_min:
+                        del self.top_domains[key]
 
 
     def refactor_tqueries(self, query, count):
@@ -373,13 +395,15 @@ class DnsLog:
         elif count >= self.t_queries_min:
             self.top_queries[query] = count
 
-        t_lst = self.top_queries.values()
-        self.t_queries_min = self.new_min(t_lst)
-
         if len(self.top_queries) > self.t_thresh:
-            for key, val in (self.top_queries).items():
-                if val < self.t_queries_min:
-                    del self.top_queries[key]
+            t_lst = self.top_queries.values()
+            old_min = self.t_queries_min
+            self.t_queries_min = self.new_min(t_lst)
+
+            if self.t_queries_min > old_min:
+                for key, val in (self.top_queries).items():
+                    if val < self.t_queries_min:
+                        del self.top_queries[key]
 
 
     def refactor_ttypes(self, type, ip, count):
@@ -971,4 +995,5 @@ elif user_opts["test"] == 1:
 
 else:
     sys.exit()
+
 
